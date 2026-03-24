@@ -192,27 +192,14 @@ stellar-forge/
 └── README.md
 ```
 
-## Troubleshooting
+## Security
 
-### Freighter not detected
-- Make sure the [Freighter browser extension](https://www.freighter.app/) is installed and enabled.
-- Refresh the page after installing — the extension injects into the page on load.
-- If using a Chromium-based browser, check that the extension has permission to run on `localhost`.
+We take security seriously. If you discover a security vulnerability, please review our [Security Policy](SECURITY.md) for responsible disclosure guidelines.
 
-### Wrong network selected in Freighter
-- Open Freighter and switch to the same network as the app (testnet or mainnet).
-- The app's network badge in the header shows the currently active network.
-- Mismatched networks will cause transaction signing to fail with a "network mismatch" error.
-
-### Contract not initialized error
-- The factory contract must be initialized before any operations can be performed.
-- Run the `initialize` invocation from the Deployment section above.
-- Confirm the `VITE_FACTORY_CONTRACT_ID` in your `.env` matches the deployed contract ID.
-
-### IPFS upload failures
-- Verify your Pinata API key and secret are correctly set in `.env`.
-- Check that your Pinata account has not exceeded its storage quota.
-- IPFS uploads require a network connection — confirm there are no firewall or CORS issues blocking requests to `api.pinata.cloud`.
+For users deploying tokens, we strongly recommend:
+- Always test on testnet first before mainnet deployment
+- Review all parameters carefully using the mainnet deployment checklist
+- Verify contract addresses and transaction details before signing
 
 ## Contributing
 
