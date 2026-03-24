@@ -60,7 +60,7 @@ export class WalletService {
     }
 
     try {
-      const network = STELLAR_CONFIG.network as 'testnet' | 'mainnet'
+      const network = this.getActiveNetwork()
       const networkPassphrase = STELLAR_CONFIG[network].networkPassphrase
 
       const signedResult = await freighterSignTransaction(xdr, {
@@ -89,7 +89,7 @@ export class WalletService {
 
   async getBalance(address: string): Promise<string> {
     try {
-      const network = STELLAR_CONFIG.network as 'testnet' | 'mainnet'
+      const network = this.getActiveNetwork()
       const horizonUrl = STELLAR_CONFIG[network].horizonUrl
 
       const response = await fetch(`${horizonUrl}/accounts/${address}`)
@@ -144,6 +144,14 @@ export class WalletService {
 
   getConnectedAddress(): string | null {
     return this.connectedAddress
+  }
+
+  private getActiveNetwork(): 'testnet' | 'mainnet' {
+    try {
+      const stored = localStorage.getItem('stellarforge_network')
+      if (stored === 'mainnet' || stored === 'testnet') return stored
+    } catch { /* ignore */ }
+    return STELLAR_CONFIG.network as 'testnet' | 'mainnet'
   }
 }
 

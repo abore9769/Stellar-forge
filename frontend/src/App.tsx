@@ -1,7 +1,9 @@
 import './App.css'
 import { WalletProvider } from './context/WalletContext'
 import { ToastProvider, useToast } from './context/ToastContext'
+import { NetworkProvider } from './context/NetworkContext'
 import { ToastContainer } from './components/UI/ToastContainer'
+import { NetworkSwitcher } from './components/NetworkSwitcher'
 import { useWallet } from './hooks/useWallet'
 import { Button } from './components/UI/Button'
 import { Spinner } from './components/UI/Spinner'
@@ -46,6 +48,8 @@ function AppContent() {
               </div>
 
               <div className="flex items-center gap-4">
+                <NetworkSwitcher />
+
                 {!isInstalled && (
                   <a
                     href="https://www.freighter.app/"
@@ -127,11 +131,13 @@ function AppContent() {
 
 function App() {
   return (
-    <WalletProvider>
-      <ToastProvider>
-        <AppContent />
-      </ToastProvider>
-    </WalletProvider>
+    <NetworkProvider>
+      <WalletProvider>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
+      </WalletProvider>
+    </NetworkProvider>
   )
 }
 
