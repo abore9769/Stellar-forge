@@ -1,7 +1,9 @@
-import { useState } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import './App.css'
 import { WalletProvider } from './context/WalletContext'
+import { ToastProvider, useToast } from './context/ToastContext'
+import { NetworkProvider } from './context/NetworkContext'
+import { ToastContainer } from './components/UI/ToastContainer'
+import { NetworkSwitcher } from './components/NetworkSwitcher'
 import { useWallet } from './hooks/useWallet'
 import { Button } from './components/UI/Button'
 import { Spinner } from './components/UI/Spinner'
@@ -25,22 +27,23 @@ const ProtectedRoute: React.FC<{ children: JSX.Element }> = ({ children }) => {
 }
 
 function AppContent() {
-  const [toast, setToast] = useState<string | null>(null)
   const { wallet, connect, disconnect, isConnecting, error, isInstalled } = useWallet()
+  const { addToast } = useToast()
 
-  const handleGetStarted = () => {
-    setToast("Welcome! Let's deploy your token.")
-    setTimeout(() => setToast(null), 4000)
-  }
+  const handleGetStarted = () => addToast("Welcome! Let's deploy your token.", 'info')
 
   const handleConnect = async () => {
-    await connect()
+    try {
+      await connect()
+      if (!error) addToast('Wallet connected', 'success')
+    } catch {
+      addToast('Failed to connect wallet', 'error')
+    }
   }
 
   const handleDisconnect = () => {
     disconnect()
-    setToast('Wallet disconnected')
-    setTimeout(() => setToast(null), 3000)
+    addToast('Wallet disconnected', 'info')
   }
 
   return (
@@ -62,6 +65,8 @@ function AppContent() {
               </div>
 
               <div className="flex items-center gap-4">
+                <NetworkSwitcher />
+
                 {!isInstalled && (
                   <a
                     href="https://www.freighter.app/"
@@ -132,18 +137,7 @@ function AppContent() {
           </div>
         </main>
 
-        <div
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-          className="fixed bottom-4 right-4 z-50"
-        >
-          {toast && (
-            <div className="bg-gray-900 text-white px-4 py-3 rounded-lg shadow-lg text-sm">
-              {toast}
-            </div>
-          )}
-        </div>
+        <ToastContainer />
       </div>
     </>
   )
@@ -151,11 +145,13 @@ function AppContent() {
 
 function App() {
   return (
-    <WalletProvider>
-      <BrowserRouter>
-        <AppContent />
-      </BrowserRouter>
-    </WalletProvider>
+    <NetworkProvider>
+      <WalletProvider>
+        <ToastProvider>
+          <AppContent />
+        </ToastProvider>
+      </WalletProvider>
+    </NetworkProvider>
   )
 }
 
