@@ -3,7 +3,7 @@
 use super::*;
 use soroban_sdk::{
     testutils::{Address as _, AuthorizedFunction, AuthorizedInvocation},
-    Address, Env, String,
+    Address, Env, String, symbol_short,
 };
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -211,3 +211,51 @@ fn test_get_tokens_by_creator_different_creators_are_independent() {
     assert_eq!(client.get_tokens_by_creator(&creator_a).len(), 0);
     assert_eq!(client.get_tokens_by_creator(&creator_b).len(), 0);
 }
+
+// ── get_tokens (batched) ──────────────────────────────────────────────────────
+
+#[test]
+fn test_get_tokens_empty() {
+    let (_env, client, _admin, _treasury) = setup_env();
+    let tokens = client.get_tokens(&0, &10);
+    assert_eq!(tokens.len(), 0);
+}
+
+#[test]
+fn test_get_tokens_pagination_and_limit() {
+    let (env, client, admin, _treasury) = setup_env();
+    
+    // Manually populate storage to bypass fee/token-sdk complexities in unit test
+    let creator = Address::generate(&env);
+    for i in 1..=25 {
+        let info = TokenInfo {
+            name: String::from_str(&env, "Token"),
+            symbol: String::from_str(&env, "T"),
+            decimals: 7,
+            creator: creator.clone(),
+            created_at: env.ledger().timestamp(),
+        };
+        env.storage().instance().set(&i, &info);
+    }
+    
+    // Update factory state count
+    let mut state = client.get_state();
+    state.token_count = 25;
+    env.storage().instance().set(&symbol_short!("state"), &state);
+    
+    // Test pagination: start=0, limit=10 -> tokens 1..=10
+    let tokens_0_10 = client.get_tokens(&0, &10);
+    assert_eq!(tokens_0_10.len(), 10);
+    
+    // Test limit cap: start=0, limit=50 -> tokens 1..=20 (capped)
+    let tokens_0_50 = client.get_tokens(&0, &50);
+    assert_eq!(tokens_0_50.len(), 20);
+    
+    // Test partial range: start=20, limit=10 -> tokens 21..=25 (only 5 left)
+    let tokens_20_10 = client.get_tokens(&20, &10);
+    assert_eq!(tokens_20_10.len(), 5);
+    
+    // Test out-of-range: start=25
+    let tokens_25_10 = client.get_tokens(&25, &10);
+    assert_eq!(tokens_25_10.len(), 0);
+}
