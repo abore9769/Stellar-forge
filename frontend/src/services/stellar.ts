@@ -187,9 +187,23 @@ interface RpcGetEventsResult {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function scValToString(val: any): string {
   try {
-    const type = val.switch()
+    const v = val as {
+      switch: () => unknown
+      address: () => {
+        switch: () => unknown
+        accountId: () => { publicKey: () => { toString: () => string } }
+        contractId: () => Uint8Array
+      }
+      i128: () => { hi: () => { toString: () => string }; lo: () => { toString: () => string } }
+      u64: () => { toString: () => string }
+      str: () => { toString: () => string }
+      sym: () => { toString: () => string }
+      vec: () => unknown[] | null
+      toXDR: (format: 'base64') => string
+    }
+    const type = v.switch()
     if (type === xdr.ScValType.scvAddress()) {
-      const addr = val.address()
+      const addr = v.address()
       if (addr.switch() === xdr.ScAddressType.scAddressTypeAccount()) {
         return addr.accountId().publicKey().toString()
       }
@@ -197,13 +211,13 @@ function scValToString(val: any): string {
       return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('')
     }
     if (type === xdr.ScValType.scvI128()) {
-      const hi = BigInt(val.i128().hi().toString())
-      const lo = BigInt(val.i128().lo().toString())
+      const hi = BigInt(v.i128().hi().toString())
+      const lo = BigInt(v.i128().lo().toString())
       return ((hi << 64n) | lo).toString()
     }
-    if (type === xdr.ScValType.scvU64()) return val.u64().toString()
-    if (type === xdr.ScValType.scvString()) return val.str().toString()
-    if (type === xdr.ScValType.scvSymbol()) return val.sym().toString()
+    if (type === xdr.ScValType.scvU64()) return v.u64().toString()
+    if (type === xdr.ScValType.scvString()) return v.str().toString()
+    if (type === xdr.ScValType.scvSymbol()) return v.sym().toString()
     if (type === xdr.ScValType.scvVoid()) return 'none'
     if (type === xdr.ScValType.scvBool()) return val.b().toString()
     if (type === xdr.ScValType.scvVec()) {
@@ -235,7 +249,7 @@ async function parseRpcEvent(raw: RpcEventResponse): Promise<ContractEvent | nul
     if (!EVENT_TOPICS.includes(eventType)) return null
 
     const valueVal = xdr.ScVal.fromXDR(raw.value, 'base64')
-    const items: any[] = valueVal.vec() ?? []
+    const items: unknown[] = valueVal.vec() ?? []
 
     const data: Record<string, string> = {}
 
