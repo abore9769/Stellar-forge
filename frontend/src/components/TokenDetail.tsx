@@ -4,6 +4,7 @@ import { useParams, Link } from 'react-router-dom'
 import { ipfsService } from '../services/ipfs'
 import { useNetwork } from '../context/NetworkContext'
 import { stellarExplorerUrl, ipfsToGatewayUrl } from '../utils/formatting'
+import { isValidContractAddress } from '../utils/validation'
 import type { TokenInfo, IPFSMetadata } from '../types'
 import { Card } from './UI/Card'
 import { Button } from './UI/Button'
@@ -14,10 +15,6 @@ import { SetMetadataForm } from './SetMetadataForm'
 import { useToast } from '../context/ToastContext'
 
 type ActivePanel = 'mint' | 'burn' | 'metadata' | null
-
-function isValidStellarAddress(addr: string): boolean {
-  return /^[CG][A-Z0-9]{55}$/.test(addr)
-}
 
 function formatTimestamp(ts: number): string {
   return new Date(ts * 1000).toLocaleString()
@@ -36,7 +33,7 @@ export const TokenDetail: React.FC = () => {
   const [activePanel, setActivePanel] = useState<ActivePanel>(null)
 
   useEffect(() => {
-    if (!address || !isValidStellarAddress(address)) {
+    if (!address || !isValidContractAddress(address)) {
       setNotFound(true)
       setLoading(false)
       return
